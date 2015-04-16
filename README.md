@@ -1,6 +1,8 @@
 # mllm
 Machine learning with linear models - a demo
+
 Implemented by Chris Rayner (2015)
+
 dchrisrayner AT gmail DOT com
 
 Requires pylab to be installed.
@@ -17,29 +19,31 @@ identification technique (SUBID) can result in big gains over LR.
 Have a look at this sample output (or run the program for yourself):
 
 Full Rank Data
-* Multivariate Linear Regression
-Training error: 14.88573 	Testing error: 15.11209     <-- best!
+* Multivariate Linear Regression:
+Training error: 14.88573 /	Testing error: 15.11209     <-- best!
 * Reduced Rank Regression
-Training error: 28.43934 	Testing error: 29.11977
+Training error: 28.43934 /	Testing error: 29.11977
 * Linear Dynamical System
-Training error: 14.9864 	Testing error: 15.23812
+Training error: 14.9864 /	Testing error: 15.23812
 
 Low Rank Data
-* Multivariate Linear Regression
-Training error: 14.93315 	Testing error: 15.08155
+* Multivariate Linear Regression:
+Training error: 14.93315 /	Testing error: 15.08155
 * Reduced Rank Regression
-Training error: 14.95185 	Testing error: 15.0568      <-- best!
+Training error: 14.95185 /	Testing error: 15.0568      <-- best!
 * Linear Dynamical System
-Training error: 15.84534 	Testing error: 17.14432
+Training error: 15.84534 /	Testing error: 17.14432
 
 Linear Dynamical System Data
-* Multivariate Linear Regression
-Training error: 107.05471 	Testing error: 107.06858
+* Multivariate Linear Regression:
+Training error: 107.05471 /	Testing error: 107.06858
 * Reduced Rank Regression
-Training error: 122.01291 	Testing error: 120.99966
+Training error: 122.01291 /	Testing error: 120.99966
 * Linear Dynamical System
-Training error: 21.98019 	Testing error: 22.27202     <-- best!
+Training error: 21.98019 /	Testing error: 22.27202     <-- best!
 
 My Ph.D. supervisor (Dr. Michael Bowling) introduced me to RRR;
 Dr. Tijl De Bie gave a great talk on subspace system identification
-in 2005 that I modeled my implementation on.
+in 2005 that I modeled my implementation on, here:
+
+http://videolectures.net/slsfs05_bie_slasi/
