@@ -1,30 +1,39 @@
-#
-# Subspace system identification with regularization
-# Requires pylab to be installed.
-#
-# Implemented by Chris Rayner (2015)
-# dchrisrayner AT gmail DOT com
-#
-# Based on a talk on Subspace System Identification by Tijl De Bie (2005):
-# Assume every output (y_i) is a function of the input (u_i) and
-# the current state x_i of the system, i.e.,
-#    y_i = dot(C, x_i) + dot(D, u_i)
-# Also assume the system state evolves after every input:
-#    x_(i+1) = dot(A, x_i) + dot(B, u_i)
-# This is a linear dynamical system.
-#
-# Keywords: subspace system identification, time series
-# URL: http://www.cs.ualberta.ca/~rayner/
-# Git: https://github.com/riscy/mllm
+"""
+Subspace system identification with regularization.
+Requires scipy to be installed.
 
-from pylab import *
+Implemented by Chris Rayner (2015)
+dchrisrayner AT gmail DOT com
 
+Based on a talk on Subspace System Identification by Tijl De Bie (2005):
 
-def idealData(num, dimU, dimY, dimX, noise=1):
-    """
-    Example of ideal data for this model.
-    """
+Assume every output (y_i) is a function of the input (u_i) and
+the current state x_i of the system, i.e.,
+   y_i = dot(C, x_i) + dot(D, u_i)
+Also assume the system state evolves after every input:
+   x_(i+1) = dot(A, x_i) + dot(B, u_i)
+This is a linear dynamical system.
+"""
 
+from numpy.lib import diag
+from scipy import randn
+from scipy import dot
+from scipy import shape
+from scipy import reshape
+from scipy import size
+from scipy import zeros
+from scipy import array
+from scipy import bmat
+from scipy import argsort
+from scipy import ravel
+from scipy import concatenate
+from scipy.sparse import eye
+from scipy.linalg import pinv
+from scipy.linalg import eig
+from scipy.linalg import svd
+
+def ideal_data(num, dimU, dimY, dimX, noise=1):
+    """Linear system data"""
     # generate randomized linear system matrices
     A = randn(dimX, dimX)
     B = randn(dimX, dimU)
@@ -32,9 +41,9 @@ def idealData(num, dimU, dimY, dimX, noise=1):
     D = randn(dimY, dimU)
 
     # make sure state evolution is stable
-    U,S,V = svd(A)
+    U, S, V = svd(A)
     A = dot(U, dot(diag(S / max(S)), V))
-    U,S,V = svd(B)
+    U, S, V = svd(B)
     S2 = zeros((size(U,1), size(V,0)))
     S2[:,:size(U,1)] = diag(S / max(S))
     B = dot(U, dot(S2, V))
@@ -59,28 +68,30 @@ def idealData(num, dimU, dimY, dimX, noise=1):
     return U, Y + randn(num, dimY) * noise
 
 
-class mllmSUBID:
+def create_model(U, Y, dimensionality, regularization):
+    return SystemIdentifier(U, Y, dimensionality, regularization)
+
+
+class SystemIdentifier(object):
     """
-    Simple System Identification
+    Simple Subspace System Identifier
     - U is an n-by-d matrix of "control inputs".
     - Y is an n-by-D matrix of output observations.
     - statedim is the dimension of the internal state variable.
     - reg is a regularization parameter (optional).
     """
-
-    def __init__ (self, U, Y, statedim, reg=None):
-        
+    def __init__(self, U, Y, statedim, reg=None):
         if size(shape(U)) == 1:
-            X = reshape(U, (-1,1))
+            U = reshape(U, (-1,1))
         if size(shape(Y)) == 1:
             Y = reshape(Y, (-1,1))
         if reg is None:
-           reg = 0
+            reg = 0
 
         yDim = size(Y,1)
         uDim = size(U,1)
 
-        self.outputSz = size(Y,1) # placeholder
+        self.output_size = size(Y,1) # placeholder
 
         # number of samples of past/future we'll mash together into a 'state'
         width = 1
@@ -117,7 +128,7 @@ class mllmSUBID:
         # Take smallest eigenvalues
         V,W = eig(dot(pinv(G), F))
         W = W[:, argsort(V)[:statedim]]
-        
+
         # State sequence is a weighted combination of the past
         W_U_p = W[ width * (yDim + uDim) : width * (yDim + uDim + uDim), :]
         W_Y_p = W[ width * (yDim + uDim + uDim):, :]
@@ -126,9 +137,9 @@ class mllmSUBID:
         # Regress; trim inputs to match the states we retrieved
         R = concatenate((X_hist[:, :-1], U[width:-width].T), 0)
         L = concatenate((X_hist[:, 1: ], Y[width:-width].T), 0)
-        RRi = pinv(dot(R,R.T));
-        RL  = dot(R,L.T)
-        Sys = dot(RRi,RL).T
+        RRi = pinv(dot(R, R.T))
+        RL  = dot(R, L.T)
+        Sys = dot(RRi, RL).T
         self.A = Sys[:statedim, :statedim]
         self.B = Sys[:statedim, statedim:]
         self.C = Sys[statedim:, :statedim]
@@ -136,26 +147,26 @@ class mllmSUBID:
 
 
     def __str__ (self):
-        return "* Linear Dynamical System"
+        return "Linear Dynamical System"
 
-        
+
     def predict(self, U):
         # If U is a vector, reshape it
         if size(shape(U)) == 1:
-            U = reshape(U, (-1,1))
+            U = reshape(U, (-1, 1))
 
         # assume some random initial state
-        X = reshape(randn(size(self.A, 1)), (1,-1))
+        X = reshape(randn(size(self.A, 1)), (1, -1))
 
         # intitial output
-        Y = reshape(dot(self.C, X[-1]) + dot(self.D, U[0]), (1,-1))
+        Y = reshape(dot(self.C, X[-1]) + dot(self.D, U[0]), (1, -1))
 
         # generate next state
-        X = concatenate((X, reshape(dot(self.A, X[-1]) + dot(self.B, U[0]), (1,-1))))
+        X = concatenate((X, reshape(dot(self.A, X[-1]) + dot(self.B, U[0]), (1, -1))))
 
         # and so forth
         for u in U[1:]:
-            Y = concatenate((Y, reshape(dot(self.C, X[-1]) + dot(self.D, u), (1,-1))))
-            X = concatenate((X, reshape(dot(self.A, X[-1]) + dot(self.B, u), (1,-1))))
+            Y = concatenate((Y, reshape(dot(self.C, X[-1]) + dot(self.D, u), (1, -1))))
+            X = concatenate((X, reshape(dot(self.A, X[-1]) + dot(self.B, u), (1, -1))))
 
         return Y
