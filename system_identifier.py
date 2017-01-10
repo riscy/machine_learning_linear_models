@@ -23,13 +23,12 @@ from scipy import reshape
 from scipy import size
 from scipy import zeros
 from scipy import array
-from scipy import bmat
-from scipy import argsort
+from scipy.sparse import bmat
 from scipy import ravel
 from scipy import concatenate
 from scipy.sparse import eye
 from scipy.linalg import pinv
-from scipy.linalg import eig
+from scipy.sparse.linalg import eigs
 from scipy.linalg import svd
 
 def ideal_data(num, dimU, dimY, dimX, noise=1):
@@ -111,23 +110,18 @@ class SystemIdentifier(object):
         UfUpT = dot(U_f, U_p.T)
         UfYpT = dot(U_f, Y_p.T)
         UpYpT = dot(U_p, Y_p.T)
-        F = array(bmat([[zeros((yDim*width,yDim*width)), YfUfT, YfUpT, YfYpT],
-                        [YfUfT.T, zeros((uDim*width,uDim*width)), UfUpT, UfYpT],
-                        [YfUpT.T, UfUpT.T, zeros((uDim*width,uDim*width)), UpYpT ],
-                        [YfYpT.T, UfYpT.T, UpYpT.T, zeros((yDim*width,yDim*width))]]))
-        G = array(bmat([[dot(Y_f,Y_f.T), zeros((yDim*width,uDim*width)),
-                         zeros((yDim*width,uDim*width)), zeros((yDim*width,yDim*width))],
-                        [zeros((uDim*width,yDim*width)), dot(U_f,U_f.T),
-                         zeros((uDim*width,uDim*width)), zeros((uDim*width,yDim*width))],
-                        [zeros((uDim*width,yDim*width)), zeros((uDim*width,uDim*width)),
-                         dot(U_p,U_p.T), zeros((uDim*width,yDim*width))],
-                        [zeros((yDim*width,yDim*width)), zeros((yDim*width,uDim*width)),
-                         zeros((yDim*width,uDim*width)), dot(Y_p,Y_p.T)]]))
+        F = bmat([[None, YfUfT, YfUpT, YfYpT],
+                  [YfUfT.T, None, UfUpT, UfYpT],
+                  [YfUpT.T, UfUpT.T, None, UpYpT],
+                  [YfYpT.T, UfYpT.T, UpYpT.T, None]])
+        Ginv = bmat([[pinv(dot(Y_f,Y_f.T)), None, None, None],
+                     [None, pinv(dot(U_f,U_f.T)), None, None],
+                     [None, None, pinv(dot(U_p,U_p.T)), None],
+                     [None, None, None, pinv(dot(Y_p,Y_p.T))]])
         F = F - eye(size(F, 0)) * reg
 
         # Take smallest eigenvalues
-        V,W = eig(dot(pinv(G), F))
-        W = W[:, argsort(V)[:statedim]]
+        _, W = eigs(Ginv.dot(F), k=statedim, which='SR')
 
         # State sequence is a weighted combination of the past
         W_U_p = W[ width * (yDim + uDim) : width * (yDim + uDim + uDim), :]
