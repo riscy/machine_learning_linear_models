@@ -1,16 +1,17 @@
 #+TITLE: Machine Learning with Linear Models - a demo
+Python 2.7 and 3+ compatible.
 
 [[file:img/example_results.png]]
 
 * Table of Contents :TOC_4_gh:noexport:
- - [[#description][Description]]
- - [[#usage][Usage]]
+- [[#description][Description]]
+- [[#usage][Usage]]
 
 * Description
-  This is a small demo meant to showcase a few simple but different linear
-  models for mapping vectors of observations X to vectors of outcomes Y.
-  Different assumptions about the data can lead to different levels of
-  performance -- sometimes drastically.
+  This small demo showcases a few simple but different linear models for mapping
+  vectors of observations X to vectors of outcomes Y.  Different assumptions
+  about the data can lead to different levels of performance due to bias error
+  -- sometimes drastically.
 
   For instance, when the mapping from X to Y is low rank (i.e., an information
   'bottleneck'), a technique called reduced rank regression
