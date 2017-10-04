@@ -67,10 +67,6 @@ def ideal_data(num, dimU, dimY, dimX, noise=1):
     return U, Y + randn(num, dimY) * noise
 
 
-def create_model(U, Y, dimensionality, regularization):
-    return SystemIdentifier(U, Y, dimensionality, regularization)
-
-
 class SystemIdentifier(object):
     """
     Simple Subspace System Identifier
