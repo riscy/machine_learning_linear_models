@@ -45,6 +45,6 @@ if __name__ == '__main__':
                 system_identifier.SystemIdentifier(XX[:SPLIT], YY[:SPLIT], RANK, REG)]):
             print('  {}'.format(regressor))
             training_error = sqerr(regressor.predict(XX[:SPLIT]), YY[:SPLIT])
-            testing_error = sqerr(regressor.predict(XX[SPLIT+1:]), YY[SPLIT+1:])
+            testing_error = sqerr(regressor.predict(XX[SPLIT:]), YY[SPLIT:])
             print('    Training error: {}\n    Testing error: {}'
                   .format(training_error, testing_error))
